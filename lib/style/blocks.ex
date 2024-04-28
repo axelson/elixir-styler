@@ -172,33 +172,33 @@ defmodule Styler.Style.Blocks do
     end
   end
 
-  def run({{:if, m, children}, _} = zipper, ctx) do
-    case children do
-      # Credo.Check.Refactor.NegatedConditionsWithElse
-      [negator, [{do_, do_body}, {else_, else_body}]] when is_negator(negator) ->
-        zipper |> Zipper.replace({:if, m, [invert(negator), [{do_, else_body}, {else_, do_body}]]}) |> run(ctx)
+  # def run({{:if, m, children}, _} = zipper, ctx) do
+  #   case children do
+  #     # Credo.Check.Refactor.NegatedConditionsWithElse
+  #     [negator, [{do_, do_body}, {else_, else_body}]] when is_negator(negator) ->
+  #       zipper |> Zipper.replace({:if, m, [invert(negator), [{do_, else_body}, {else_, do_body}]]}) |> run(ctx)
 
-      # if not x, do: y => unless x, do: y
-      [negator, [do_block]] when is_negator(negator) ->
-        zipper |> Zipper.replace({:unless, m, [invert(negator), [do_block]]}) |> run(ctx)
+  #     # if not x, do: y => unless x, do: y
+  #     [negator, [do_block]] when is_negator(negator) ->
+  #       zipper |> Zipper.replace({:unless, m, [invert(negator), [do_block]]}) |> run(ctx)
 
-      # drop `else: nil`
-      [head, [do_block, {_, {:__block__, _, [nil]}}]] ->
-        {:cont, Zipper.replace(zipper, {:if, m, [head, [do_block]]}), ctx}
+  #     # drop `else: nil`
+  #     [head, [do_block, {_, {:__block__, _, [nil]}}]] ->
+  #       {:cont, Zipper.replace(zipper, {:if, m, [head, [do_block]]}), ctx}
 
-      [head, [do_, else_]] ->
-        if Style.max_line(do_) > Style.max_line(else_) do
-          # we inverted the if/else blocks of this `if` statement in a previous pass (due to negators or unless)
-          # shift comments etc to make it happy now
-          if_ast(zipper, head, do_, else_, ctx)
-        else
-          {:cont, zipper, ctx}
-        end
+  #     [head, [do_, else_]] ->
+  #       if Style.max_line(do_) > Style.max_line(else_) do
+  #         # we inverted the if/else blocks of this `if` statement in a previous pass (due to negators or unless)
+  #         # shift comments etc to make it happy now
+  #         if_ast(zipper, head, do_, else_, ctx)
+  #       else
+  #         {:cont, zipper, ctx}
+  #       end
 
-      _ ->
-        {:cont, zipper, ctx}
-    end
-  end
+  #     _ ->
+  #       {:cont, zipper, ctx}
+  #   end
+  # end
 
   def run(zipper, ctx), do: {:cont, zipper, ctx}
 
